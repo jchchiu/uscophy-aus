@@ -5,21 +5,21 @@
 
 echo "download genomes"
 
-#datasets \
-#	download \
-#	genome \
-#	taxon Balanomorpha \
-#	--filename Example_Dataset.zip \
-#	--reference
+# datasets \
+	download \
+	genome \
+	taxon Balanomorpha \
+	--filename Example_Dataset.zip \
+	--reference
 
 # we can use the Taxonomy name to download genomes or provide a list with accession numbers
-#datasets \
-#	download \
-#	genome \
-#	taxon  \
-#	--inputfile outgroup_list.txt \
-#	--filename Outgroup_Dataset.zip \
-#	--reference
+datasets \
+	download \
+	genome \
+	taxon  \
+	--inputfile outgroup_list.txt \
+	--filename Outgroup_Dataset.zip \
+	--reference
 
 
 # extract the genomes form the datasets zip

@@ -1,0 +1,7 @@
+.snakemake/
+environment/
+Example_Dataset.zip
+input/
+output/
+build/
+*.egg-info
