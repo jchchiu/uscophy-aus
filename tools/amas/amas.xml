@@ -1,4 +1,4 @@
-<tool id="amas" name="AMAS" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" profile="23.1">
+<tool id="amas" name="AMAS" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" profile="21.09">
     <description>Alignment manipulation and summary statistics</description>
     <macros>
         <import>macros.xml</import>
@@ -19,15 +19,32 @@
                 --concat-part $concat-part
                 --concat-out $concat-out
                 --part-format $part-format
-                
+            #end if
+            #if $action.action_selector == 'convert':
+                '$action.action_selector'
+            #end if
+            #if $action.action_selector == 'replicate':
+                '$action.action_selector'
+                --rep-aln $[FILL HERE]
+            #end if
+            #if $action.action_selector == 'split':
+                '$action.action_selector'
+                --split-by $[FILL HERE]
+                $remove-empty [COPY HOW CHECK-ALIGN IS DONE]
+            #end if
+            #if $action.action_selector == 'summary':
+                '$action.action_selector'
+                --by-taxon $[FILL HERE]
+            #end if
+
             --in-files
             --in-format $format
             --data-type $data-type
+            $check-align
 
     ]]></command>
     <inputs>
-        <param name="test" type="hidden"/>
-        <param type="data" name="input" format="fasta,fasta.gz" label="Sequences to analyse" help="Can be an assembled genome or transcriptome (DNA), or protein sequences from an annotated gene set."/>
+        <param name="test" type="hidden"/> #For test
         <conditional name="action">
             <param name="action_selector" type="select" label="Action to perform">
                 <option value="concat">Concatenate input alignments</option>
@@ -35,10 +52,27 @@
                 <option value="replicate">Create replicate data sets for phylogenetic jackknife</option>
                 <option value="split">Split alignment according to a partitions file</option>
                 <option value="summary">Write alignment summary</option>
+            </param>
             <when value="concat">
-                <param name="concat"
+                <param name="concat-part" type="text" value="partitions.txt" label="File name for the concatenated alignment partitions. Default: 'partitions.txt'"/>
+                <param name="concat-out" type="text" value="concatenated.out" label="File name for the concatenated alignment. Default: 'concatenated.out'"/>
+                <param name="part-format" type="select" label="Format of the partitions file">
+                    <option value="nexus">nexus</option>
+                    <option value="raxml">raxml</option>
+                    <option value="unspecified" selected="true">unspecified</option>
+                </param>
+            </when>
+            <when value="replicate">
+                #fill in here
+            </when>
+            <when value="split">
+                #fill in here
+            </when>
+            <when value="summary">
+                #fill in here
             </when>
         </conditional>
+        #FIGURE OUT HOW TO DO INPUTS<param type="data" name="input" format="fasta,fasta.gz" label="Sequences to analyse" help="Can be an assembled genome or transcriptome (DNA), or protein sequences from an annotated gene set."/>
         <param name="format" type="select" label="Format of the file">
             <option value="fasta">fasta</option>
             <option value="phylip">phylip</option>
@@ -48,19 +82,16 @@
         <param name="data-type" type="select" label="Data type">
             <option value="aa">Protein alignments</option>
             <option value="dna">Nucleotide alignments</option>
+        </param>
+
+        # implement select param for output format (-u or --output-format)
 
         <param name="check-align" type="boolean" label="Check if input sequences are aligned"
                truevalue="--check-align" falsevalue="">
 
-        <param name="outputs" type="select" optional="true" multiple="true" label="Which outputs should be generated">
-            <option value="short_summary" selected="true">Short summary text</option>
-            <option value="missing">List with missing IDs</option>
-            <option value="image">Summary image</option>
-            <option value="gff">gff</option>
-            <option value="faa">Protein sequences</option>
-            <option value="fna">Nucleotide sequences</option>
-        </param>
+        # no need to implement param for cores?
 
+#EXAMPLE OF ADVANCED OPTIONS/NOT EXPANDED [CAN REMOVE]
         <section name="adv" title="Advanced Options" expanded="False">
             <param argument="--evalue" type="float" value="0.001" min="0" max="1" label="E-value cutoff for BLAST searches."/>
             <param argument="--limit" type="integer" value="3" label="How many candidate regions to consider"/>
@@ -68,6 +99,7 @@
         </section>
     </inputs>
 
+# NEED TO DO OUTPUTS
     <outputs>
         <data name='busco_sum' format='txt' label="${tool.name} on ${on_string}: Short summary - Specific lineage" from_work_dir="busco_galaxy/short_summary.specific.*.txt">
             <filter>outputs and 'short_summary' in outputs</filter>
@@ -77,6 +109,7 @@
         </data>              
     </outputs>
 
+# BUSCO TEST EXAMPLES; CHANGE FOR AMAS
     <tests>
 		<test expect_num_outputs="2">
             <param name="test" value="true"/>
@@ -166,30 +199,6 @@
                 <has_text text="BUSCO analysis done"/>
             </assert_stdout>
         </test>
-        <!-- <test expect_num_outputs="3">
-            <param name="test" value="true"/>
-            <param name="input" value="genome.fa"/>
-            <conditional name="lineage">
-                <param name="lineage_mode" value="select_lineage"/>
-                <param name="lineage_dataset" value="arthropoda_odb10"/>
-            </conditional>
-            <param name="outputs" value="short_summary,gff"/>
-            <output name="busco_sum">
-                <assert_contents>
-                    <has_text text="# Gene predictor used: miniprot"/>
-                </assert_contents>
-            </output>
-            <output name="busco_gff" file="genome_results_miniprot/out.gff" compare="diff"/>
-            <output name="busco_table" file="genome_results_miniprot/full_table">
-                <assert_contents>
-                    <has_text text="# BUSCO version is: @TOOL_VERSION@"/>
-                    <has_text text="9647at6656"/>
-                </assert_contents>
-            </output>
-            <assert_stdout>
-                <has_text text="BUSCO analysis done"/>
-            </assert_stdout>
-        </test> -->
     </tests>
 
     <help><![CDATA[
