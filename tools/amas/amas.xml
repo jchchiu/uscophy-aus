@@ -30,7 +30,7 @@
             #if $action.action_selector == 'split':
                 '$action.action_selector'
                 --split-by $[FILL HERE]
-                $remove-empty [COPY HOW CHECK-ALIGN IS DONE]
+                $remove-empty
             #end if
             #if $action.action_selector == 'summary':
                 '$action.action_selector'
@@ -66,7 +66,8 @@
                 #fill in here
             </when>
             <when value="split">
-                #fill in here
+                <param name="remove-empty" type="boolean" label="Remove taxa with sequences composed of only undetermined characters?"
+                       checked="false" truevalue="--remove-empty" falsevalue=""/>
             </when>
             <when value="summary">
                 #fill in here
@@ -88,7 +89,7 @@
         # implement select param for output format (-u or --output-format)
 
         <param name="check-align" type="boolean" label="Check if input sequences are aligned"
-               truevalue="--check-align" falsevalue=""/>
+               checked="false" truevalue="--check-align" falsevalue=""/>
 
         # no need to implement param for cores?
 
