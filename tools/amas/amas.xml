@@ -1,0 +1,217 @@
+<tool id="amas" name="AMAS" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" profile="23.1">
+    <description>Alignment manipulation and summary statistics</description>
+    <macros>
+        <import>macros.xml</import>
+    </macros>
+    <xrefs>
+        <xref type="bio.tools">amas</xref>
+    </xrefs>
+    <requirements>
+        <requirement type="package" version="@TOOL_VERSION@">amas</requirement>
+    </requirements>
+    <version_command>amas --version</version_command>
+    <command><![CDATA[
+        mkdir -p ./tmp &&
+        python3 AMAS.py
+            ## Select action and any flags specific to the action
+            #if $action.action_selector == 'concat':
+                '$action.action_selector'
+                --concat-part $concat-part
+                --concat-out $concat-out
+                --part-format $part-format
+                
+            --in-files
+            --in-format $format
+            --data-type $data-type
+
+    ]]></command>
+    <inputs>
+        <param name="test" type="hidden"/>
+        <param type="data" name="input" format="fasta,fasta.gz" label="Sequences to analyse" help="Can be an assembled genome or transcriptome (DNA), or protein sequences from an annotated gene set."/>
+        <conditional name="action">
+            <param name="action_selector" type="select" label="Action to perform">
+                <option value="concat">Concatenate input alignments</option>
+                <option value="convert">Convert to other file format</option>
+                <option value="replicate">Create replicate data sets for phylogenetic jackknife</option>
+                <option value="split">Split alignment according to a partitions file</option>
+                <option value="summary">Write alignment summary</option>
+            <when value="concat">
+                <param name="concat"
+            </when>
+        </conditional>
+        <param name="format" type="select" label="Format of the file">
+            <option value="fasta">fasta</option>
+            <option value="phylip">phylip</option>
+            <option value="phylip-int">phylip-int</option>
+            <option value="nexus">nexus(sequential)</option>
+            <option value="nexus-int">nexus(interleaved)</option>
+        <param name="data-type" type="select" label="Data type">
+            <option value="aa">Protein alignments</option>
+            <option value="dna">Nucleotide alignments</option>
+
+        <param name="check-align" type="boolean" label="Check if input sequences are aligned"
+               truevalue="--check-align" falsevalue="">
+
+        <param name="outputs" type="select" optional="true" multiple="true" label="Which outputs should be generated">
+            <option value="short_summary" selected="true">Short summary text</option>
+            <option value="missing">List with missing IDs</option>
+            <option value="image">Summary image</option>
+            <option value="gff">gff</option>
+            <option value="faa">Protein sequences</option>
+            <option value="fna">Nucleotide sequences</option>
+        </param>
+
+        <section name="adv" title="Advanced Options" expanded="False">
+            <param argument="--evalue" type="float" value="0.001" min="0" max="1" label="E-value cutoff for BLAST searches."/>
+            <param argument="--limit" type="integer" value="3" label="How many candidate regions to consider"/>
+            <param argument="--contig_break" type="integer" value="10" label="Number of contiguous Ns to signify a break between contigs"/>
+        </section>
+    </inputs>
+
+    <outputs>
+        <data name='busco_sum' format='txt' label="${tool.name} on ${on_string}: Short summary - Specific lineage" from_work_dir="busco_galaxy/short_summary.specific.*.txt">
+            <filter>outputs and 'short_summary' in outputs</filter>
+        </data>
+        <data name='busco_fna_generic' format='fasta' label="${tool.name} on ${on_string}: Nucleotide sequences - Generic lineage" from_work_dir="busco_galaxy/busco_output_generic.fna">
+            <filter>(outputs and 'fna' in outputs) and lineage['lineage_mode'] == 'auto_detect' and lineage['generic_results']</filter>
+        </data>              
+    </outputs>
+
+    <tests>
+		<test expect_num_outputs="2">
+            <param name="test" value="true"/>
+            <param name="input" value="bacilli_odb_test.fasta"/>
+            <conditional name="lineage">
+                <param name="lineage_mode" value="auto_detect"/>
+                <param name="auto_lineage" value="--auto-lineage-prok"/>
+            </conditional>
+            <conditional name="busco_mode">
+                <param name="mode" value="geno"/>
+            </conditional>
+            <param name="outputs" value="short_summary"/>
+            <output name="busco_sum">
+                <assert_contents>
+                    <has_text text="Gene predictor used: prodigal"/>
+                </assert_contents>
+            </output>
+            <output name="busco_table">
+                <assert_contents>
+                    <has_text text="# BUSCO version is: @TOOL_VERSION@"/>
+                    <has_text text="The lineage dataset is: bacilli_odb10"/>
+                </assert_contents>
+            </output>
+        </test>
+        <test expect_num_outputs="10">
+            <param name="test" value="true"/>
+            <param name="input" value="genome.fa"/>
+            <conditional name="lineage">
+                <param name="lineage_mode" value="auto_detect"/>
+                <param name="auto_lineage" value="--auto-lineage"/>
+                <param name="generic_results" value="true"/>
+            </conditional>
+            <conditional name="busco_mode">
+                <param name="mode" value="geno"/>
+                <conditional name="use_augustus">
+                    <param name="use_augustus_selector" value="metaeuk"/>
+                </conditional>
+            </conditional>
+            <param name="outputs" value="short_summary,missing,image,gff"/>
+            <output name="busco_sum">
+                <assert_contents>
+                    <has_text text="Gene predictor used: prodigal"/>
+                </assert_contents>
+            </output>
+			<output name="busco_sum_generic">
+                <assert_contents>
+                    <has_text text="Gene predictor used: prodigal"/>
+                </assert_contents>
+            </output>
+            <output name="busco_table">
+                <assert_contents>
+                    <has_text text="# BUSCO version is: @TOOL_VERSION@"/>
+                    <has_text text="The lineage dataset is: "/>
+                </assert_contents>
+            </output>
+            <output name="busco_table_generic">
+                <assert_contents>
+                    <has_text text="# BUSCO version is: @TOOL_VERSION@"/>
+                    <has_text text="The lineage dataset is: "/>
+                </assert_contents>
+            </output>
+			<output name="busco_missing">
+                <assert_contents>
+                    <has_text text="# BUSCO version is: @TOOL_VERSION@"/>
+                    <has_text text="The lineage dataset is: "/>
+                </assert_contents>
+            </output>
+			<output name="busco_missing_generic">
+                <assert_contents>
+                    <has_text text="# BUSCO version is: @TOOL_VERSION@"/>
+                    <has_text text="The lineage dataset is: "/>
+                </assert_contents>
+            </output>
+            <output name="summary_image" file="genome_results_metaeuk_auto/summary.png" compare="sim_size"/>
+            <output name="summary_image_generic" file="genome_results_metaeuk_auto/summary.png" compare="sim_size"/>
+            <output name="busco_gff">
+                <assert_contents>
+                    <has_text text="##gff-version 3"/>
+                </assert_contents>
+            </output>
+            <output name="busco_gff_generic">
+                <assert_contents>
+                    <has_text text="##gff-version 3"/>
+                </assert_contents>
+            </output>
+            <assert_stdout>
+                <has_text text="BUSCO analysis done"/>
+            </assert_stdout>
+        </test>
+        <!-- <test expect_num_outputs="3">
+            <param name="test" value="true"/>
+            <param name="input" value="genome.fa"/>
+            <conditional name="lineage">
+                <param name="lineage_mode" value="select_lineage"/>
+                <param name="lineage_dataset" value="arthropoda_odb10"/>
+            </conditional>
+            <param name="outputs" value="short_summary,gff"/>
+            <output name="busco_sum">
+                <assert_contents>
+                    <has_text text="# Gene predictor used: miniprot"/>
+                </assert_contents>
+            </output>
+            <output name="busco_gff" file="genome_results_miniprot/out.gff" compare="diff"/>
+            <output name="busco_table" file="genome_results_miniprot/full_table">
+                <assert_contents>
+                    <has_text text="# BUSCO version is: @TOOL_VERSION@"/>
+                    <has_text text="9647at6656"/>
+                </assert_contents>
+            </output>
+            <assert_stdout>
+                <has_text text="BUSCO analysis done"/>
+            </assert_stdout>
+        </test> -->
+    </tests>
+
+    <help><![CDATA[
+        AMAS: Calculate summary statistics and manipulate multiple sequence alignments 
+        --------------------------------------------------------------------------------------------------------------
+
+        AMAS works on amino acid and nucleotide alignments and combines capabilities of sequence manipulation with a function that calculates 
+        basic statistics. The manipulation functions include conversions among popular formats, concatenation, extracting sites and splitting 
+        according to a pre-defined partitioning scheme, creation of replicate data sets, and removal of taxa. The statistics calculated 
+        include the number of taxa, alignment length, total count of matrix cells, overall number of undetermined characters, percent of 
+        missing data, AT and GC contents (for DNA alignments), count and proportion of variable sites, count and proportion of parsimony 
+        informative sites, and counts of all characters relevant for a nucleotide or amino acid alphabet. AMAS is particularly suitable for 
+        very large alignments with hundreds of taxa and thousands of loci. It is computationally efficient, utilizes parallel processing, 
+        and performs better at concatenation than other popular tools. AMAS is a Python 3 program that relies solely on Python’s 
+        core modules and needs no additional dependencies. 
+
+        IMPORTANT! AMAS is fast and powerful, but be careful: it assumes you know what you are doing and will not prevent you overwriting a file. 
+        It will, however, print out a warning if this has happened. AMAS was also written to work with aligned data and some of the output generated 
+        from unaligned sequences won't make sense. Because of computing efficiency AMAS by default does not check if input sequences are aligned. 
+        You can turn this option on with -e or --check-align.
+
+        AMAS source code and manual can be downloaded from http://github.com/marekborowiec/AMAS/ under GNU General Public License.
+    ]]></help>
+    <expand macro="citations"/>
+</tool>

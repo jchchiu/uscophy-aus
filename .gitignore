@@ -5,3 +5,4 @@ input/
 output/
 build/
 *.egg-info
+.venv
