@@ -79,6 +79,7 @@
             <option value="phylip-int">phylip-int</option>
             <option value="nexus">nexus(sequential)</option>
             <option value="nexus-int">nexus(interleaved)</option>
+        </param>
         <param name="data-type" type="select" label="Data type">
             <option value="aa">Protein alignments</option>
             <option value="dna">Nucleotide alignments</option>
@@ -87,7 +88,7 @@
         # implement select param for output format (-u or --output-format)
 
         <param name="check-align" type="boolean" label="Check if input sequences are aligned"
-               truevalue="--check-align" falsevalue="">
+               truevalue="--check-align" falsevalue=""/>
 
         # no need to implement param for cores?
 
