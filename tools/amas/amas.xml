@@ -1,4 +1,4 @@
-<tool id="amas" name="AMAS" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" profile="21.09">
+<tool id="amas" name="AMAS" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" profile="25.0">
     <description>Alignment manipulation and summary statistics</description>
     <macros>
         <import>macros.xml</import>
@@ -11,41 +11,35 @@
     </requirements>
     <version_command>amas --version</version_command>
     <command><![CDATA[
-        python3 AMAS.py
+        AMAS.py
             ## Select action and any flags specific to the action
-            #if $action.action_selector == 'concat':
-                '$action.action_selector'
-                --concat-part $concat-part
-                --concat-out $concat-out
-                --part-format $part-format
+            #if $action.action_selector == "concat":
+                $action.action_selector
+                --part-format $part_format
             #end if
-            #if $action.action_selector == 'convert':
-                '$action.action_selector'
+            #if $action.action_selector == "convert":
+                $action.action_selector
             #end if
-            #if $action.action_selector == 'replicate':
-                '$action.action_selector'
-                --rep-aln $[FILL HERE]
+            #if $action.action_selector == "replicate":
+                $action.action_selector
+                --rep-aln ''
             #end if
-            #if $action.action_selector == 'split':
+            #if $action.action_selector == "split":
                 '$action.action_selector'
-                --split-by $[FILL HERE]
+                --split-by $split_by
                 $remove-empty
             #end if
-            #if $action.action_selector == 'summary':
+            #if $action.action_selector == "summary":
                 '$action.action_selector'
-                --by-taxon $[FILL HERE]
+                --by-taxon ''
             #end if
-
-            --in-files '$input'
-            --in-format $in-format
-            --data-type $data-type
-
+            --in-files ${input}
+            --in-format $in_format
+            --data-type $data_type
             #if $action.action_selector != 'summary':
-                --out-format $out-format
+                --out-format $out_format
             #end if
-
-            $check-align
-
+            $check_align
     ]]></command>
     <inputs>
         <param name="test" type="hidden"/>
@@ -59,55 +53,90 @@
                 <option value="summary">Write alignment summary</option>
             </param>
             <when value="concat">
-                <param name="concat-part" type="text" value="partitions.txt" label="File name for the concatenated alignment partitions. Default: 'partitions.txt'"/>
-                <param name="concat-out" type="text" value="concatenated.out" label="File name for the concatenated alignment. Default: 'concatenated.out'"/>
-                <param name="part-format" type="select" label="Format of the partitions file">
+                <param name="part_format" type="select" label="Format of the partitions file">
                     <option value="nexus">nexus</option>
                     <option value="raxml">raxml</option>
                     <option value="unspecified" selected="true">unspecified</option>
                 </param>
             </when>
+            <when value="convert"/>
             <when value="replicate">
-                <param name="rep-aln" type="text" value="replicates"/>
+                <param name="rep_aln" type="text" value="replicates"/>
             </when>
             <when value="split">
-                <param name="split-by" type="text" label="File name for partitions to be used for alignment splitting"/>
-                <param name="remove-empty" type="boolean" label="Remove taxa with sequences composed of only undetermined characters?" 
+                <param name="split_by" type="text" label="File name for partitions to be used for alignment splitting"/>
+                <param name="remove_empty" type="boolean" label="Remove taxa with sequences composed of only undetermined characters?" 
                        checked="false" truevalue="--remove-empty" falsevalue=""/>
             </when>
             <when value="summary">
 
             </when>
         </conditional>
-        <param name="in-format" type="select" label="Format of the input file">
+        <param name="in_format" type="select" label="Format of the input file">
             <option value="fasta">fasta</option>
             <option value="phylip">phylip</option>
             <option value="phylip-int">phylip-int</option>
             <option value="nexus">nexus(sequential)</option>
             <option value="nexus-int">nexus(interleaved)</option>
         </param>
-        <param name="data-type" type="select" label="Data type">
+        <param name="data_type" type="select" label="Data type">
             <option value="aa">Protein alignments</option>
             <option value="dna">Nucleotide alignments</option>
         </param>
-        <param name="out-format" type="select" label="Format of the output file (Ignore for summary)">
+        <param name="out_format" type="select" label="Format of the output file (Not used for summary)">
             <option value="fasta">fasta</option>
             <option value="phylip">phylip</option>
             <option value="phylip-int">phylip-int</option>
             <option value="nexus">nexus(sequential)</option>
             <option value="nexus-int">nexus(interleaved)</option>
         </param>
-        <param name="check-align" type="boolean" label="Check if input sequences are aligned"
+        <param name="check_align" type="boolean" label="Check if input sequences are aligned"
                checked="false" truevalue="--check-align" falsevalue=""/>
     </inputs>
 
     <outputs>
+    <!--
         <data name='busco_sum' format='txt' label="${tool.name} on ${on_string}: Short summary - Specific lineage" from_work_dir="busco_galaxy/short_summary.specific.*.txt">
             <filter>outputs and 'short_summary' in outputs</filter>
         </data>
         <data name='busco_fna_generic' format='fasta' label="${tool.name} on ${on_string}: Nucleotide sequences - Generic lineage" from_work_dir="busco_galaxy/busco_output_generic.fna">
             <filter>(outputs and 'fna' in outputs) and lineage['lineage_mode'] == 'auto_detect' and lineage['generic_results']</filter>
-        </data>              
+        </data>      
+    -->
+    <!-- Summary mode -->
+        <data name="summary_txt" format="txt" label="AMAS Summary Statistics" from_work_dir="summary.txt">
+            <filter>action['action_selector'] == "summary"</filter>
+        </data>
+
+        <data name="summary_plot" format="pdf" label="Summary Plot" from_work_dir="summary_plot.pdf">
+            <filter>action['action_selector'] == "summary"</filter>
+        </data>
+
+        <!-- Concat mode -->
+        <data name="concat_output" format="fasta" label="Concatenated alignment" from_work_dir="concatenated.fasta">
+            <filter>action['action_selector'] == "concat"</filter>
+        </data>
+
+        <data name="partitions_out" format="txt" label="Partition file" from_work_dir="partitions.txt">
+            <filter>action['action_selector'] == "concat"</filter>
+        </data>
+
+        <!-- Convert mode -->
+        <data name="converted_alignment" format="fasta" label="Converted alignment" from_work_dir="converted_alignment.fasta">
+            <filter>action['action_selector'] == "convert"</filter>
+        </data>
+
+        <!-- Split mode -->
+        <data_collection name="split_alignments" type="list" label="Split alignment files">
+            <discover_datasets pattern="split_.*\\.fasta" directory="split_out/" format="fasta"/>
+            <filter>action['action_selector'] == "split"</filter>
+        </data_collection>
+
+        <!-- Replicate mode -->
+        <data_collection name="replicate_alignments" type="list" label="Replicate alignments">
+            <discover_datasets pattern="replicate_.*\\.fasta" directory="replicates_out/" format="fasta"/>
+            <filter>action['action_selector'] == "replicate"</filter>
+        </data_collection>        
     </outputs>
 
     <tests>
