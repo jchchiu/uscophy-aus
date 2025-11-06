@@ -1,10 +1,10 @@
-## Example of code to run AMAS
+## Example of code to run AMAS in the Biohackathon workflow
 ```
 ( AMAS.py concat \
   -f fasta \
   -d aa \
-  --concat-out {output.matrix} \
-  --concat-part {output.partitions} \
+  --concat-out supermatrix_aa.fas \
+  --concat-part partitions.txt \
   --part-format nexus \
   -i {input}  )
   ```
